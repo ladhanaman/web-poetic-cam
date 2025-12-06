@@ -41,9 +41,6 @@ def analyze_image(image_path: str) -> str:
             prompt = """
             Analyze this image through the lens of a 19th-century poet. 
             Identify the following three elements:
-            Do not describe the image literally. Instead, describe the **soul** of the image.
-            Use abstract concepts (Eternity, Solitude, Death, Nature).
-            Use archaic, rhythmic phrasing.
             1. Mood: A single adjective (e.g., Melancholic, Serene, Chaotic).
             2. Themes: 2-3 abstract concepts (Eternity, Solitude, Death, Nature).
             Use archaic, rhythmic phrasing.
