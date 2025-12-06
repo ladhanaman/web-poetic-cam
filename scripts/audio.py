@@ -1,45 +1,39 @@
 import asyncio
 import edge_tts
-import os
+import io
 from typing import Optional
 
 class AudioEngine:
     """
-    Handles Text-to-Speech synthesis using Edge TTS (Free, High Quality).
-    Wraps async methods for synchronous usage in Streamlit.
+    Handles Text-to-Speech synthesis using Edge TTS.
+    Returns in-memory bytes for cloud compatibility.
     """
 
     def __init__(self, output_dir: str = "assets/audio"):
-        self.output_dir = output_dir
-        os.makedirs(self.output_dir, exist_ok=True)
-        
-        
+        # We keep output_dir in init for compatibility, but won't use it for file saving
         self.voice = "en-GB-SoniaNeural" 
 
-    async def _generate_audio_async(self, text: str, output_file: str) -> None:
-        """Internal async handler for communicating with Edge API."""
+    async def _generate_audio_async(self, text: str) -> bytes:
+        """Internal async handler to fetch audio bytes directly."""
         communicate = edge_tts.Communicate(text, self.voice)
-        await communicate.save(output_file)
+        audio_data = b""
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                audio_data += chunk["data"]
+        return audio_data
 
-    def synthesize(self, text: str, filename: str = "poem_output.mp3") -> Optional[str]:
+    def synthesize(self, text: str, filename: str = None) -> Optional[bytes]:
         """
-        Synthesizes text to speech and saves to disk.
-        
+        Synthesizes text to speech and returns raw bytes.
         Args:
-            text: The poem text to read.
-            filename: The name of the file to save.
-            
+            text: The poem to read.
+            filename: Ignored in cloud version (kept for interface compatibility).
         Returns:
-            str: Path to the generated audio file.
+            bytes: The raw audio data.
         """
-        output_path = os.path.join(self.output_dir, filename)
-        
         try:
             # Engineering Bridge: Running Async code in Sync environment
-            # This creates a new event loop to run the coroutine
-            asyncio.run(self._generate_audio_async(text, output_path))
-            return output_path
-            
+            return asyncio.run(self._generate_audio_async(text))
         except Exception as e:
             print(f"Error in Audio Synthesis: {e}")
             return None
