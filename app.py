@@ -17,23 +17,20 @@ except ImportError:
     MODULES_AVAILABLE = False
 
 # --- Config ---
-st.set_page_config(layout="wide", page_title="Poetic camera")
+st.set_page_config(layout="wide", page_title="Poetic Camera")
 
 st.markdown("""
 <style>
     .stApp { background-color: #0e1117; color: #c9d1d9; }
-    .stButton>button { background-color: #238636; color: white; border-radius: 5px; height: 3em; }
-    
-    /* Make headers stand out */
-    h2 { border-bottom: 2px solid #238636; padding-bottom: 10px; }
-    
-    /* Hide the default Streamlit menu for immersion */
+    .stButton>button { background-color: #238636; color: white; border-radius: 5px; height: 3em; font-family: monospace; }
+    h1, h2, h3 { font-family: 'Courier New', Courier, monospace; }
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# --- Caching ---
+# --- CACHING FUNCTIONS ---
+
 @st.cache_data(show_spinner=False)
 def run_vision_cached(image_file):
     try:
@@ -43,17 +40,35 @@ def run_vision_cached(image_file):
     except Exception as e:
         return f"Error: {e}"
 
+@st.cache_data(show_spinner=False)
+def load_universe_vectors():
+    """Fetches the 'Universe' background only ONCE per session."""
+    print("[SYSTEM] Cache Miss: Fetching Background Universe vectors...")
+    try:
+        results = retrieve_poems("Life Death Eternity Nature Soul Love Time", top_k=50)
+        return [item['values'] for item in results if 'values' in item]
+    except Exception:
+        return []
+
 # --- Session State ---
-keys = ['narrative', 'retrieved_items', 'generated_poem', 'audio_path', 'last_upload_id', 'query_vector']
+keys = ['narrative', 'retrieved_items', 'generated_poem', 'audio_bytes', 'last_upload_id', 'query_vector']
 for k in keys:
     if k not in st.session_state:
         st.session_state[k] = None
 
+# ==========================================
 # 1. INPUT ZONE (Sidebar)
-
+# ==========================================
 with st.sidebar:
-    st.header("Get me some clicks of your reality")
-    input_method = st.radio("Source", ["Upload", "Camera"], label_visibility="collapsed")
+    st.header("Input Configuration")
+    
+    # FIX: Added key="input_mode" to prevent duplicate ID error
+    input_method = st.radio(
+        "Source", 
+        ["Upload", "Camera"], 
+        label_visibility="collapsed",
+        key="input_mode" 
+    )
     
     image_source = None
     if input_method == "Upload":
@@ -62,16 +77,16 @@ with st.sidebar:
         image_source = st.camera_input("Capture Scene")
     
     st.markdown("---")
-    if st.button("Reset System"):
+    if st.button("System Reset"):
         st.cache_data.clear()
         for k in keys: st.session_state[k] = None
         st.rerun()
 
-
+# ==========================================
 # MAIN LOGIC
-
+# ==========================================
 st.title("Poetic Camera")
-st.caption("Glance your reality through the eyes of Emily Dickinson.")
+st.caption("System Status: Online | Mode: Multimodal RAG")
 
 if image_source:
     
@@ -82,88 +97,86 @@ if image_source:
         st.session_state.retrieved_items = None
         st.session_state.generated_poem = None
         st.session_state.query_vector = None 
+        # Note: Changed 'audio_path' to 'audio_bytes' in session state keys above
+        st.session_state.audio_bytes = None 
         st.session_state.last_upload_id = file_id
 
-    # Layout: We add 'gap="medium"' for breathing room
+    # Layout
     col1, col2, col3 = st.columns([1, 1, 1], gap="medium")
     
-    # --- CARD 1: STIMULUS ---
+    # --- CARD 1: VISUAL INGESTION ---
     with col1:
-        # VISUAL SEPARATION: Everything goes inside a bordered container
         with st.container(border=True):
-            st.subheader("Visual Ingestion")
+            st.subheader("I. Ingestion")
             st.image(image_source, use_container_width=True)
-            st.caption("Raw Input")
+            st.caption("Status: Image Captured")
 
-    # --- CARD 2: ANALYSIS ---
+    # --- CARD 2: INTERNAL MONOLOGUE ---
     with col2:
         with st.container(border=True):
-            st.subheader("Internal Monologue")
+            st.subheader("II. Processing")
             
             # 1. Vision Analysis
             if not st.session_state.narrative:
-                with st.status("Analyzing visual data...", expanded=True) as s:
+                with st.status("[SYSTEM] Initializing Vision Pipeline...", expanded=True) as s:
+                    st.write("Task: Image Analysis (Gemini Flash 1.5)")
                     st.session_state.narrative = run_vision_cached(image_source)
-                    s.update(label="Vision Processed", state="complete", expanded=False)
+                    s.update(label="[SYSTEM] Vision Analysis: Complete", state="complete", expanded=False)
             
             if st.session_state.narrative:
-                st.info(f"**Seen:** {st.session_state.narrative}")
+                st.info(f"**Narrative:** {st.session_state.narrative}")
 
             # 2. Memory Retrieval
             if st.session_state.narrative and not st.session_state.retrieved_items:
-                with st.spinner("Accessing Pinecone Memory..."):
+                with st.spinner("Task: Vector Search (Pinecone)..."):
                     st.session_state.retrieved_items = retrieve_poems(st.session_state.narrative)
                     st.session_state.query_vector = get_embedding(st.session_state.narrative)
 
-
+            # 3. Visualization
             if st.session_state.retrieved_items and MODULES_AVAILABLE:
                 st.write("---")
-                st.caption("Semantic Position (Latent Space)")
+                st.caption("Latent Space Visualization")
                 
-                # Initialize with default background file
-                # Make sure "data/dickinson_metadata_dense.json" exists!
-                viz = LatentSpaceVisualizer() 
+                # FIX: Load universe and pass to visualizer
+                universe = load_universe_vectors()
+                viz = LatentSpaceVisualizer(background_vectors=universe)
                 
                 fig = viz.visualize_query_context(
                     st.session_state.query_vector, 
                     st.session_state.retrieved_items
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                if fig:
+                    st.plotly_chart(fig, use_container_width=True)
 
-    # --- CARD 3: SYNTHESIS ---
+    # --- CARD 3: GENERATIVE INFERENCE ---
     with col3:
         with st.container(border=True):
-            st.subheader("Generative Inference")
+            st.subheader("III. Output")
             
             if st.session_state.retrieved_items:
                 
-                # We nest another container for the controls to make them look like a "Control Panel"
-                st.markdown("#### Configuration")
+                st.markdown("#### Parameters")
                 
                 temperature = st.slider(
-                    "Creativity (Temperature)", 
+                    "Model Temperature", 
                     min_value=0.1, max_value=1.0, value=0.7
                 )
                 
-                with st.expander("Review Source Inspirations"):
+                with st.expander("Context Data (Retrieval Results)"):
                     for i, m in enumerate(st.session_state.retrieved_items):
                         meta = m.get('metadata', {})
                         title = meta.get('title', f"Poem #{i+1}")
-                        
-                        # FIX: Strip whitespace so formatting doesn't break
-                        raw_text = meta.get('text', "No text found.")
-                        clean_text = raw_text.strip() 
-
+                        clean_text = meta.get('text', "No text.").strip() 
                         st.markdown(f"**{title}**")
-                        # Use * for italics, and ensure no spaces between * and text
-                        st.caption(f"*{clean_text}*") 
+                        st.caption(f"_{clean_text}_") 
                         st.divider()
 
-                st.write("---") # Visual separator before the big button
+                st.write("---") 
 
-                if st.button("Generate Poem", type="primary", use_container_width=True):
-                    with st.status("Composing...", expanded=True) as status:
-                        status.write("Llama 3 is writing...")
+                if st.button("Execute Generation Sequence", type="primary", use_container_width=True):
+                    with st.status("[SYSTEM] Running Generation Sequence...", expanded=True) as status:
+                        
+                        status.write("Task: Text Inference (Llama-3-70b)")
                         st.session_state.generated_poem = generate_poem(
                             st.session_state.narrative,
                             st.session_state.retrieved_items,
@@ -171,29 +184,24 @@ if image_source:
                         )
                         
                         if MODULES_AVAILABLE:
-                            status.write("Synthesizing voice...")
+                            status.write("Task: Audio Synthesis (Edge TTS)")
                             audio = AudioEngine()
-                            st.session_state.audio_path = audio.synthesize(st.session_state.generated_poem)
+                            # FIX: Store bytes, not path
+                            st.session_state.audio_bytes = audio.synthesize(st.session_state.generated_poem)
                         
-                        status.update(label="Complete!", state="complete", expanded=False)
+                        status.update(label="[SYSTEM] Sequence Finished", state="complete", expanded=False)
 
                 # Output Area
-                
                 if st.session_state.generated_poem:
-                    # 1. Replace standard hyphens with Em-dashes to prevent bullet points
                     clean_poem = st.session_state.generated_poem.replace("- ", "— ")
-    
                     st.markdown(
-                        f"<div style='text-align: center; font-style: italic;'>{clean_poem}</div>", 
+                        f"<div style='text-align: center; font-style: italic; padding: 10px; font-family: serif;'>{clean_poem}</div>", 
                         unsafe_allow_html=True
                     )
     
-                    # Audio player remains below
-                    if st.session_state.audio_path:
-                        st.audio(st.session_state.audio_path)
-                    
-                    
+                    # FIX: Play bytes directly
+                    if st.session_state.audio_bytes:
+                        st.audio(st.session_state.audio_bytes, format="audio/mp3")
 
 else:
-    # Empty State
-    st.info("Waiting for input... Upload a photo to begin.")
+    st.info("System Idle: Waiting for Visual Input.")
