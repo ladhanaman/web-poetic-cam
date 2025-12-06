@@ -10,3 +10,4 @@ plotly
 edge-tts
 streamlit
 watchdog
+gTTS
