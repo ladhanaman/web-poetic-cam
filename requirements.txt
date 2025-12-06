@@ -1,0 +1,12 @@
+groq
+python-dotenv
+pinecone
+google-generativeai
+typing-extensions
+Pillow
+scikit-learn 
+pandas 
+plotly
+edge-tts
+streamlit
+watchdog
