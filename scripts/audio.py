@@ -1,37 +1,50 @@
-import asyncio
-import edge_tts
+from gtts import gTTS
 import io
 from typing import Optional
 
 class AudioEngine:
     """
-    Handles Text-to-Speech synthesis using Edge TTS.
-    Returns in-memory bytes for cloud compatibility.
+    Handles Text-to-Speech using Google TTS (gTTS).
+    Synchronous implementation for maximum stability on Streamlit Cloud.
     """
 
     def __init__(self, output_dir: str = "assets/audio"):
-        self.voice = "en-GB-SoniaNeural" 
-
-    async def _generate_audio_async(self, text: str) -> bytes:
-        """Internal async handler to fetch audio bytes directly."""
-        print(f"[DEBUG] Starting TTS for text length: {len(text)}") # DEBUG LOG
-        try:
-            communicate = edge_tts.Communicate(text, self.voice)
-            audio_data = b""
-            async for chunk in communicate.stream():
-                if chunk["type"] == "audio":
-                    audio_data += chunk["data"]
-            
-            print(f"[DEBUG] TTS Complete. Generated {len(audio_data)} bytes.") # DEBUG LOG
-            return audio_data
-        except Exception as e:
-            print(f"[ERROR] EdgeTTS internal error: {e}")
-            raise e
+        # gTTS detects language automatically, but we enforce English
+        self.lang = 'en'
+        # 'tld' allows us to change the accent. 
+        # 'co.uk' gives a British accent (Emily Dickinson style)
+        self.tld = 'co.uk' 
 
     def synthesize(self, text: str, filename: str = None) -> Optional[bytes]:
+        """
+        Synthesizes text to speech and returns raw bytes.
+        """
+        print(f"[SYSTEM] Starting gTTS synthesis for: {text[:30]}...")
+        
         try:
-            # Run the async function
-            return asyncio.run(self._generate_audio_async(text))
+            if not text.strip():
+                print("[ERROR] AudioEngine received empty text.")
+                return None
+
+            # 1. Initialize the Google TTS engine
+            tts = gTTS(text=text, lang=self.lang, tld=self.tld, slow=False)
+            
+            # 2. Create an in-memory file buffer (BytesIO)
+            # This acts like a file on a hard drive, but lives in RAM.
+            buffer = io.BytesIO()
+            
+            # 3. Write audio data to the buffer
+            tts.write_to_fp(buffer)
+            
+            # 4. Rewind the buffer to the beginning so it can be read
+            buffer.seek(0)
+            
+            # 5. Get the raw bytes
+            audio_bytes = buffer.getvalue()
+            
+            print(f"[SYSTEM] gTTS Complete. Size: {len(audio_bytes)} bytes.")
+            return audio_bytes
+
         except Exception as e:
-            print(f"[ERROR] Audio Synthesis Wrapper failed: {e}")
+            print(f"[ERROR] gTTS Failed: {e}")
             return None
