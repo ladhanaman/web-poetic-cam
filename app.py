@@ -1,4 +1,5 @@
 import streamlit as st
+import io
 import os
 import time
 from PIL import Image
@@ -191,17 +192,23 @@ if image_source:
                         
                         status.update(label="[SYSTEM] Sequence Finished", state="complete", expanded=False)
 
-                # Output Area
+            # OUTPUT DISPLAY
                 if st.session_state.generated_poem:
-                    clean_poem = st.session_state.generated_poem.replace("- ", "— ")
-                    st.markdown(
-                        f"<div style='text-align: center; font-style: italic; padding: 10px; font-family: serif;'>{clean_poem}</div>", 
-                        unsafe_allow_html=True
-                    )
-    
-                    # FIX: Play bytes directly
-                    if st.session_state.audio_bytes:
-                        st.audio(st.session_state.audio_bytes, format="audio/mp3")
+                        clean_poem = st.session_state.generated_poem.replace("- ", "— ")
+                        st.markdown(
+                            f"<div style='text-align: center; font-style: italic; padding: 10px; font-family: serif;'>{clean_poem}</div>", 
+                            unsafe_allow_html=True
+                        )
+        
+                        if st.session_state.audio_bytes:
+                            # DEBUG: Verify we have data
+                            st.caption(f"Audio Size: {len(st.session_state.audio_bytes)} bytes")
+                            
+                            # FIX: Wrap in BytesIO to ensure it's treated as a file-like object
+                            audio_stream = io.BytesIO(st.session_state.audio_bytes)
+                            st.audio(audio_stream, format="audio/mp3")
+                        else:
+                            st.warning("Audio generation failed (Empty Bytes). Check logs.")
 
 else:
     st.info("System Idle: Waiting for Visual Input.")
