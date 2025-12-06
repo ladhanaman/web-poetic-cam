@@ -192,23 +192,32 @@ if image_source:
                         
                         status.update(label="[SYSTEM] Sequence Finished", state="complete", expanded=False)
 
-            # OUTPUT DISPLAY
+
+                # Output Area
                 if st.session_state.generated_poem:
-                        clean_poem = st.session_state.generated_poem.replace("- ", "— ")
-                        st.markdown(
-                            f"<div style='text-align: center; font-style: italic; padding: 10px; font-family: serif;'>{clean_poem}</div>", 
-                            unsafe_allow_html=True
-                        )
-        
-                        if st.session_state.audio_bytes:
-                            # DEBUG: Verify we have data
-                            st.caption(f"Audio Size: {len(st.session_state.audio_bytes)} bytes")
-                            
-                            # FIX: Wrap in BytesIO to ensure it's treated as a file-like object
-                            audio_stream = io.BytesIO(st.session_state.audio_bytes)
-                            st.audio(audio_stream, format="audio/mp3")
+                    clean_poem = st.session_state.generated_poem.replace("- ", "— ")
+                    st.markdown(
+                        f"<div style='text-align: center; font-style: italic; padding: 10px; font-family: serif;'>{clean_poem}</div>", 
+                        unsafe_allow_html=True
+                    )
+    
+                    # DEBUG & PLAYBACK LOGIC
+                    if st.session_state.audio_bytes:
+                        byte_size = len(st.session_state.audio_bytes)
+                        
+                        # 1. Sanity Check: Is the file too small? (< 1KB)
+                        # If Google blocks us, it sends a tiny text file error instead of audio.
+                        if byte_size < 1000:
+                            st.warning(f"[SYSTEM] Audio generation blocked (Size: {byte_size} bytes). Provider rejected request.")
                         else:
-                            st.warning("Audio generation failed (Empty Bytes). Check logs.")
+                            # 2. Success: Play the audio
+                            # usage of 'audio/mpeg' is more strictly supported by browsers than 'audio/mp3'
+                            st.caption(f"Audio Stream: {byte_size / 1024:.1f} KB")
+                            st.audio(st.session_state.audio_bytes, format="audio/mpeg")
+                    
+                    elif st.session_state.audio_bytes is None and st.session_state.generated_poem:
+                        # Audio tried to run but returned Nothing
+                        st.warning("Audio Engine returned no data.")
 
 else:
     st.info("System Idle: Waiting for Visual Input.")
