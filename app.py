@@ -112,6 +112,10 @@ if image_source:
             st.image(image_source, use_container_width=True)
             st.caption("Status: Image Captured")
 
+    # DEBUG: Check the actual size
+            img = Image.open(image_source)
+            st.caption(f"Resolution: {img.size[0]} x {img.size[1]} pixels")
+
     # --- CARD 2: INTERNAL MONOLOGUE ---
     with col2:
         with st.container(border=True):
