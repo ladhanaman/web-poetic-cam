@@ -35,7 +35,7 @@ def analyze_image(image_path: str) -> str:
             # Keep img in memory for the API call
             
             
-            model = genai.GenerativeModel('gemini-2.5-flash')
+            model = genai.GenerativeModel('gemini-2.0-flash')
 
             # 3. The Prompt
             prompt = """
@@ -73,7 +73,7 @@ def analyze_image(image_path: str) -> str:
             narrative = f"A {mood_str} poem about {theme_str}, featuring imagery of {noun_str}."
             
             print(f"Analysis Complete.")
-            print(f"➡️ Generated Query: '{narrative}'")
+            print(f"Generated Query: '{narrative}'")
             
             return narrative
 
