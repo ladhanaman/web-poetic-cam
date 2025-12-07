@@ -1,6 +1,6 @@
 groq
 python-dotenv
-pinecone-client>=3.1.0
+pinecone
 google-generativeai
 typing-extensions
 Pillow
