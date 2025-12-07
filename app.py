@@ -63,6 +63,7 @@ for k in keys:
 with st.sidebar:
     st.header("Input Configuration")
     
+    # FIX: Added key="input_mode" to prevent duplicate ID error
     input_method = st.radio(
         "Source", 
         ["Upload", "Camera"], 
@@ -70,16 +71,12 @@ with st.sidebar:
         key="input_mode" 
     )
     
-    # Initialize image_source as None
     image_source = None
-    
-    # CASE 1: UPLOAD (Stay in Sidebar)
     if input_method == "Upload":
         image_source = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"])
+    else:
+        image_source = st.camera_input("Capture Scene")
     
-    # CASE 2: CAMERA (Logic moves to Main Area below)
-    # We don't put st.camera_input here anymore!
-
     st.markdown("---")
     if st.button("System Reset"):
         st.cache_data.clear()
@@ -114,10 +111,6 @@ if image_source:
             st.subheader("I. Ingestion")
             st.image(image_source, use_container_width=True)
             st.caption("Status: Image Captured")
-
-    # DEBUG: Check the actual size
-            img = Image.open(image_source)
-            st.caption(f"Resolution: {img.size[0]} x {img.size[1]} pixels")
 
     # --- CARD 2: INTERNAL MONOLOGUE ---
     with col2:
