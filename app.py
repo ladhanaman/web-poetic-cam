@@ -133,7 +133,6 @@ if image_source:
             st.caption(f"Res: {img.size[0]} x {img.size[1]} px")
 
     # --- CARD 2: INTERNAL MONOLOGUE ---
-    # --- CARD 2: INTERNAL MONOLOGUE ---
     with col2:
         with st.container(border=True):
             st.subheader("II. Processing")
@@ -142,33 +141,33 @@ if image_source:
             if not st.session_state.narrative:
                 with st.status("[SYSTEM] Initializing Vision Pipeline...", expanded=True) as s:
                     st.write("Task: Image Analysis (Llama 3.2 Vision)")
-                    # This captures the result (or the error string)
+                    # Capture the result
                     result = run_vision_cached(image_source) 
                     st.session_state.narrative = result
                     s.update(label="[SYSTEM] Vision Analysis: Complete", state="complete", expanded=False)
             
-            # --- ERROR CHECKING ---
-            # Check if narrative is None or empty
+            # --- ERROR HANDLING & RETRIEVAL ---
+            # A. Check for empty results
             if not st.session_state.narrative:
                 st.error("Vision Analysis returned no data. Check logs.")
             
-            # Check if narrative contains an Error message
+            # B. Check for explicit error messages from our script
             elif st.session_state.narrative.startswith("ERROR:") or "Error:" in st.session_state.narrative:
                 st.error(f"Pipeline Failed: {st.session_state.narrative}")
-                st.stop() # Stop execution here so it doesn't try to use bad data
+                st.stop() 
             
+            # C. Proceed if valid
             else:
-                # Only run this if we have a valid narrative
                 st.info(f"**Narrative:** {st.session_state.narrative}")
 
                 # 2. Memory Retrieval
                 if not st.session_state.retrieved_items:
                     with st.spinner("Task: Vector Search (Pinecone)..."):
-                        
-                    st.session_state.retrieved_items = retrieve_poems(st.session_state.narrative)
-                    st.session_state.query_vector = get_embedding(st.session_state.narrative)
+                        # INDENTATION FIX: These lines are now inside the 'with' block
+                        st.session_state.retrieved_items = retrieve_poems(st.session_state.narrative)
+                        st.session_state.query_vector = get_embedding(st.session_state.narrative)
 
-            # 3. Visualization
+            # 3. Visualization (Stays outside the retrieval block)
             if st.session_state.retrieved_items and MODULES_AVAILABLE:
                 st.write("---")
                 st.caption("Latent Space Visualization")
