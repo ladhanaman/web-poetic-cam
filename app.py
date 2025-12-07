@@ -210,8 +210,6 @@ if image_source:
                         st.caption(f"{clean_text}") 
                         st.divider()
 
-                st.write("---") 
-
                 # ... inside the button click event ...
 
 if st.button("Generate poem with voice", type="primary", use_container_width=True):
