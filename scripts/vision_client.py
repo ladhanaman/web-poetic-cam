@@ -189,7 +189,7 @@ def analyze_image(image_file) -> str:
 
     except Exception as e:
         print(f"Vision Bridge Failed: {e}")
-        return ""
+        return f"ERROR: {str(e)}"
 
 if __name__ == "__main__":
     # Simple test for local debugging
