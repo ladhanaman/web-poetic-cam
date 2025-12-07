@@ -181,9 +181,17 @@ if image_source:
                 with st.expander("Context Data"):
                     for i, m in enumerate(st.session_state.retrieved_items):
                         meta = m.get('metadata', {})
-                        title = meta.get('title', f"{i+1}")
+                        raw_title = meta.get('title', f"{i+1}")
                         clean_text = meta.get('text', "No text.").strip()
-                        st.markdown(f"{title}")
+                        clean_title = raw_title
+                        
+                        # Fix "Poem poem" -> "Poem"
+                        if "poem poem" in clean_title.lower():
+                            clean_title = clean_title.lower().replace("poem poem", "Poem").title()
+                        
+                        clean_title = clean_title.replace("_", " ").title()
+                        
+                        st.markdown(f"**{clean_title}**")
                         st.caption(f"{clean_text}") 
                         st.divider()
 
