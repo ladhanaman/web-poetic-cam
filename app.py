@@ -212,7 +212,7 @@ if image_source:
 
                 # ... inside the button click event ...
 
-        if st.button("Generate poem with voice", type="primary", use_container_width=True):
+    if st.button("Generate poem with voice", type="primary", use_container_width=True):
     
     # --- PHASE 1: TEXT GENERATION (Critical Path) ---
         with st.status("Drafting Poem...", expanded=True) as status:
@@ -237,10 +237,8 @@ if image_source:
 
     # --- PHASE 2: AUDIO GENERATION (Background Task) ---
         if MODULES_AVAILABLE and st.session_state.generated_poem:
-        
         # Create a placeholder for the audio player so it pops in later
             audio_placeholder = st.empty()
-        
             with audio_placeholder.status("Synthesizing Audio...", expanded=False) as audio_status:
             # 2. Generate Audio
                 audio = AudioEngine()
