@@ -212,38 +212,46 @@ if image_source:
 
                 st.write("---") 
 
-                if st.button("Execute Generation Sequence", type="primary", use_container_width=True):
-                    with st.status("[SYSTEM] Running Generation Sequence...", expanded=True) as status:
-                        
-                        status.write("Task: Text Inference (Llama-3-70b)")
-                        st.session_state.generated_poem = generate_poem(
-                            st.session_state.narrative,
-                            st.session_state.retrieved_items,
-                            temperature=temperature
-                        )
-                        
-                        if MODULES_AVAILABLE:
-                            status.write("Task: Audio Synthesis (Google TTS)")
-                            audio = AudioEngine()
-                            st.session_state.audio_bytes = audio.synthesize(st.session_state.generated_poem)
-                        
-                        status.update(label="[SYSTEM] Sequence Finished", state="complete", expanded=False)
+                # ... inside the button click event ...
 
-                # Output Area
-                if st.session_state.generated_poem:
-                    clean_poem = st.session_state.generated_poem.replace("- ", "— ")
-                    st.markdown(
-                        f"<div style='text-align: center; font-style: italic; padding: 10px; font-family: serif;'>{clean_poem}</div>", 
-                        unsafe_allow_html=True
-                    )
+if st.button("Generate poem with voice", type="primary", use_container_width=True):
     
-                    if st.session_state.audio_bytes:
-                        byte_size = len(st.session_state.audio_bytes)
-                        if byte_size < 1000:
-                            st.warning(f"[SYSTEM] Audio blocked (Size: {byte_size} bytes).")
-                        else:
-                            st.caption(f"Audio Stream: {byte_size / 1024:.1f} KB")
-                            st.audio(st.session_state.audio_bytes, format="audio/mpeg")
+    # --- PHASE 1: TEXT GENERATION (Critical Path) ---
+    with st.status("Drafting Poem...", expanded=True) as status:
+        st.write("Task: Text Inference (Llama-3-70b)")
+        
+        # 1. Generate text
+        st.session_state.generated_poem = generate_poem(
+            st.session_state.narrative,
+            st.session_state.retrieved_items,
+            temperature=temperature
+        )
+        status.update(label="Poem Drafted!", state="complete", expanded=False)
+
+    # --- IMMEDIATE RENDER ---
+    if st.session_state.generated_poem:
+        clean_poem = st.session_state.generated_poem.replace("- ", "— ")
+        
+        st.markdown(
+            f"<div style='text-align: center; font-style: italic; padding: 10px; font-family: serif;'>{clean_poem}</div>", 
+            unsafe_allow_html=True
+        )
+
+    # --- PHASE 2: AUDIO GENERATION (Background Task) ---
+    if MODULES_AVAILABLE and st.session_state.generated_poem:
+        
+        # Create a placeholder for the audio player so it pops in later
+        audio_placeholder = st.empty()
+        
+        with audio_placeholder.status("Synthesizing Audio...", expanded=False) as audio_status:
+            # 2. Generate Audio
+            audio = AudioEngine()
+            st.session_state.audio_bytes = audio.synthesize(st.session_state.generated_poem)
+            audio_status.update(label="Audio Ready", state="complete")
+        
+        # 3. Replace the status spinner with the actual Audio Player
+        if st.session_state.audio_bytes:
+            audio_placeholder.audio(st.session_state.audio_bytes, format="audio/mpeg")
 
 else:
     st.info("System Idle: Select 'Camera' or 'Upload' to begin.")
