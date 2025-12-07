@@ -1,5 +1,4 @@
 import streamlit as st
-import io
 import os
 import time
 from PIL import Image
@@ -31,7 +30,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- CACHING FUNCTIONS ---
-
 @st.cache_data(show_spinner=False)
 def run_vision_cached(image_file):
     try:
@@ -43,7 +41,6 @@ def run_vision_cached(image_file):
 
 @st.cache_data(show_spinner=False)
 def load_universe_vectors():
-    """Fetches the 'Universe' background only ONCE per session."""
     print("[SYSTEM] Cache Miss: Fetching Background Universe vectors...")
     try:
         results = retrieve_poems("Life Death Eternity Nature Soul Love Time", top_k=50)
@@ -58,12 +55,12 @@ for k in keys:
         st.session_state[k] = None
 
 # ==========================================
-# 1. INPUT ZONE (Sidebar)
+# 1. SIDEBAR (Controls Only)
 # ==========================================
 with st.sidebar:
     st.header("Input Configuration")
     
-    # FIX: Added key="input_mode" to prevent duplicate ID error
+    # 1. Select Mode
     input_method = st.radio(
         "Source", 
         ["Upload", "Camera"], 
@@ -71,11 +68,10 @@ with st.sidebar:
         key="input_mode" 
     )
     
-    image_source = None
+    # 2. Upload Logic (Stays in Sidebar because it doesn't need width)
+    sidebar_upload = None
     if input_method == "Upload":
-        image_source = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"])
-    else:
-        image_source = st.camera_input("Capture Scene")
+        sidebar_upload = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"])
     
     st.markdown("---")
     if st.button("System Reset"):
@@ -89,16 +85,35 @@ with st.sidebar:
 st.title("Poetic Camera")
 st.caption("System Status: Online | Mode: Multimodal RAG")
 
+# --- CAMERA HANDLING (The Fix) ---
+# We initialize image_source to None
+image_source = None
+
+if input_method == "Upload":
+    # If upload, grab from sidebar
+    image_source = sidebar_upload
+
+elif input_method == "Camera":
+    # --- CRITICAL FIX: CAMERA IN MAIN AREA ---
+    # We place the camera widget here, spanning the full width of the main column.
+    # This forces the browser to request a high-res stream (720p or 1080p).
+    
+    # We use an expander so the camera closes neatly after you take the photo
+    with st.expander("📸 Open Viewfinder (High Res)", expanded=(st.session_state.last_upload_id is None)):
+        camera_shot = st.camera_input("Capture Scene")
+        if camera_shot:
+            image_source = camera_shot
+
+# --- PROCESSING PIPELINE ---
 if image_source:
     
-    # --- STATE MANAGEMENT ---
+    # Check for new file
     file_id = f"{image_source.name}_{image_source.size}"
     if st.session_state.last_upload_id != file_id:
         st.session_state.narrative = None
         st.session_state.retrieved_items = None
         st.session_state.generated_poem = None
         st.session_state.query_vector = None 
-        # Note: Changed 'audio_path' to 'audio_bytes' in session state keys above
         st.session_state.audio_bytes = None 
         st.session_state.last_upload_id = file_id
 
@@ -109,8 +124,13 @@ if image_source:
     with col1:
         with st.container(border=True):
             st.subheader("I. Ingestion")
+            
+            # Display Image without stretching it (stops blur if image is small)
             st.image(image_source, use_container_width=True)
-            st.caption("Status: Image Captured")
+            
+            # DEBUG: Show actual resolution to verify the fix
+            img = Image.open(image_source)
+            st.caption(f"Res: {img.size[0]} x {img.size[1]} px")
 
     # --- CARD 2: INTERNAL MONOLOGUE ---
     with col2:
@@ -138,7 +158,6 @@ if image_source:
                 st.write("---")
                 st.caption("Latent Space Visualization")
                 
-                # FIX: Load universe and pass to visualizer
                 universe = load_universe_vectors()
                 viz = LatentSpaceVisualizer(background_vectors=universe)
                 
@@ -157,13 +176,9 @@ if image_source:
             if st.session_state.retrieved_items:
                 
                 st.markdown("#### Parameters")
+                temperature = st.slider("Model Temperature", 0.1, 1.0, 0.7)
                 
-                temperature = st.slider(
-                    "Model Temperature", 
-                    min_value=0.1, max_value=1.0, value=0.7
-                )
-                
-                with st.expander("Context Data (Retrieval Results)"):
+                with st.expander("Context Data"):
                     for i, m in enumerate(st.session_state.retrieved_items):
                         meta = m.get('metadata', {})
                         title = meta.get('title', f"Poem #{i+1}")
@@ -185,13 +200,11 @@ if image_source:
                         )
                         
                         if MODULES_AVAILABLE:
-                            status.write("Task: Audio Synthesis (Edge TTS)")
+                            status.write("Task: Audio Synthesis (Google TTS)")
                             audio = AudioEngine()
-                            # FIX: Store bytes, not path
                             st.session_state.audio_bytes = audio.synthesize(st.session_state.generated_poem)
                         
                         status.update(label="[SYSTEM] Sequence Finished", state="complete", expanded=False)
-
 
                 # Output Area
                 if st.session_state.generated_poem:
@@ -201,23 +214,13 @@ if image_source:
                         unsafe_allow_html=True
                     )
     
-                    # DEBUG & PLAYBACK LOGIC
                     if st.session_state.audio_bytes:
                         byte_size = len(st.session_state.audio_bytes)
-                        
-                        # 1. Sanity Check: Is the file too small? (< 1KB)
-                        # If Google blocks us, it sends a tiny text file error instead of audio.
                         if byte_size < 1000:
-                            st.warning(f"[SYSTEM] Audio generation blocked (Size: {byte_size} bytes). Provider rejected request.")
+                            st.warning(f"[SYSTEM] Audio blocked (Size: {byte_size} bytes).")
                         else:
-                            # 2. Success: Play the audio
-                            # usage of 'audio/mpeg' is more strictly supported by browsers than 'audio/mp3'
                             st.caption(f"Audio Stream: {byte_size / 1024:.1f} KB")
                             st.audio(st.session_state.audio_bytes, format="audio/mpeg")
-                    
-                    elif st.session_state.audio_bytes is None and st.session_state.generated_poem:
-                        # Audio tried to run but returned Nothing
-                        st.warning("Audio Engine returned no data.")
 
 else:
-    st.info("System Idle: Waiting for Visual Input.")
+    st.info("System Idle: Select 'Camera' or 'Upload' to begin.")
