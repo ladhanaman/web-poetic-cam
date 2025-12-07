@@ -133,6 +133,7 @@ if image_source:
             st.caption(f"Res: {img.size[0]} x {img.size[1]} px")
 
     # --- CARD 2: INTERNAL MONOLOGUE ---
+    # --- CARD 2: INTERNAL MONOLOGUE ---
     with col2:
         with st.container(border=True):
             st.subheader("II. Processing")
@@ -140,16 +141,30 @@ if image_source:
             # 1. Vision Analysis
             if not st.session_state.narrative:
                 with st.status("[SYSTEM] Initializing Vision Pipeline...", expanded=True) as s:
-                    st.write("Task: Image Analysis (Gemini Flash 1.5)")
-                    st.session_state.narrative = run_vision_cached(image_source)
+                    st.write("Task: Image Analysis (Llama 3.2 Vision)")
+                    # This captures the result (or the error string)
+                    result = run_vision_cached(image_source) 
+                    st.session_state.narrative = result
                     s.update(label="[SYSTEM] Vision Analysis: Complete", state="complete", expanded=False)
             
-            if st.session_state.narrative:
+            # --- ERROR CHECKING ---
+            # Check if narrative is None or empty
+            if not st.session_state.narrative:
+                st.error("Vision Analysis returned no data. Check logs.")
+            
+            # Check if narrative contains an Error message
+            elif st.session_state.narrative.startswith("ERROR:") or "Error:" in st.session_state.narrative:
+                st.error(f"Pipeline Failed: {st.session_state.narrative}")
+                st.stop() # Stop execution here so it doesn't try to use bad data
+            
+            else:
+                # Only run this if we have a valid narrative
                 st.info(f"**Narrative:** {st.session_state.narrative}")
 
-            # 2. Memory Retrieval
-            if st.session_state.narrative and not st.session_state.retrieved_items:
-                with st.spinner("Task: Vector Search (Pinecone)..."):
+                # 2. Memory Retrieval
+                if not st.session_state.retrieved_items:
+                    with st.spinner("Task: Vector Search (Pinecone)..."):
+                        
                     st.session_state.retrieved_items = retrieve_poems(st.session_state.narrative)
                     st.session_state.query_vector = get_embedding(st.session_state.narrative)
 
