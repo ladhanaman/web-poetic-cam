@@ -100,7 +100,11 @@ from PIL import Image
 
 load_dotenv()
 
-# Initialize Groq
+# --- CONFIGURATION ---
+# Engineering Tip: Define model IDs as constants at the top or in .env
+# This makes future updates a 1-line change.
+VISION_MODEL_ID = "meta-llama/llama-4-scout-17b-16e-instruct" 
+
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 def analyze_image(image_file) -> str:
@@ -112,20 +116,18 @@ def analyze_image(image_file) -> str:
     if image_file is None:
         return ""
 
-    print(f"Analyzing image...")
+    print(f"[SYSTEM] Analyzing image with model: {VISION_MODEL_ID}...")
     
     try:
-        # 1. Load and Resize (Same logic as your original)
-        # We open the file-like object directly from Streamlit
+        # 1. Load and Resize
         with Image.open(image_file) as img:
-            # Convert to RGB to avoid errors with PNG alpha channels
             if img.mode != 'RGB':
                 img = img.convert('RGB')
-                
+            
+            # Resize to optimize token usage and latency
             img.thumbnail((800, 800))
             
-            # 2. Convert to Base64 for Groq
-            # Groq needs a base64 string, not a raw object
+            # 2. Convert to Base64
             buffered = io.BytesIO()
             img.save(buffered, format="JPEG")
             base64_image = base64.b64encode(buffered.getvalue()).decode('utf-8')
@@ -148,7 +150,7 @@ def analyze_image(image_file) -> str:
 
         # 4. API Call
         response = client.chat.completions.create(
-            model="llama-3.2-11b-vision-preview",
+            model=VISION_MODEL_ID, # <--- Updated Reference
             messages=[
                 {
                     "role": "system",
@@ -184,15 +186,17 @@ def analyze_image(image_file) -> str:
         
         narrative = f"A {mood_str} poem about {theme_str}, featuring imagery of {noun_str}."
         
-        print(f"Generated Query: '{narrative}'")
+        print(f"[SUCCESS] Generated Query: '{narrative}'")
         return narrative
 
     except Exception as e:
-        print(f"Vision Bridge Failed: {e}")
+        print(f"[ERROR] Vision Bridge Failed: {e}")
+        # Fallback suggestion for the logs
+        if "model_decommissioned" in str(e):
+            print("CRITICAL: The model ID is invalid. Check Groq Console for the latest model.")
         return f"ERROR: {str(e)}"
 
 if __name__ == "__main__":
-    # Simple test for local debugging
     if os.path.exists("test.jpg"):
         with open("test.jpg", "rb") as f:
             print(analyze_image(f))
