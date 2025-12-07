@@ -181,9 +181,9 @@ if image_source:
                 with st.expander("Context Data"):
                     for i, m in enumerate(st.session_state.retrieved_items):
                         meta = m.get('metadata', {})
-                        title = meta.get('title', f"{i+1}")######
-                        clean_text = meta.get('text', "No text.").strip()######### 
-                        st.markdown(f"**{title}**")
+                        title = meta.get('title', f"{i+1}")
+                        clean_text = meta.get('text', "No text.").strip()
+                        st.markdown(f"{title}")
                         st.caption(f"{clean_text}") 
                         st.divider()
 
