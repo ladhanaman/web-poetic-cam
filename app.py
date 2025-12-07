@@ -183,6 +183,7 @@ if image_source:
                         meta = m.get('metadata', {})
                         raw_title = meta.get('title', f"{i+1}")
                         clean_text = meta.get('text', "No text.").strip()
+                        
                         clean_title = raw_title
                         
                         # Fix "Poem poem" -> "Poem"
