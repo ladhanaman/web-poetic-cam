@@ -212,44 +212,44 @@ if image_source:
 
                 # ... inside the button click event ...
 
-if st.button("Generate poem with voice", type="primary", use_container_width=True):
+        if st.button("Generate poem with voice", type="primary", use_container_width=True):
     
     # --- PHASE 1: TEXT GENERATION (Critical Path) ---
-    with st.status("Drafting Poem...", expanded=True) as status:
-        st.write("Task: Text Inference (Llama-3-70b)")
+        with st.status("Drafting Poem...", expanded=True) as status:
+            st.write("Task: Text Inference (Llama-3-70b)")
         
         # 1. Generate text
-        st.session_state.generated_poem = generate_poem(
-            st.session_state.narrative,
-            st.session_state.retrieved_items,
-            temperature=temperature
-        )
-        status.update(label="Poem Drafted!", state="complete", expanded=False)
+            st.session_state.generated_poem = generate_poem(
+                st.session_state.narrative,
+                st.session_state.retrieved_items,
+                temperature=temperature
+            )
+            status.update(label="Poem Drafted!", state="complete", expanded=False)
 
     # --- IMMEDIATE RENDER ---
-    if st.session_state.generated_poem:
-        clean_poem = st.session_state.generated_poem.replace("- ", "— ")
+        if st.session_state.generated_poem:
+            clean_poem = st.session_state.generated_poem.replace("- ", "— ")
         
-        st.markdown(
-            f"<div style='text-align: center; font-style: italic; padding: 10px; font-family: serif;'>{clean_poem}</div>", 
-            unsafe_allow_html=True
-        )
+            st.markdown(
+                f"<div style='text-align: center; font-style: italic; padding: 10px; font-family: serif;'>{clean_poem}</div>", 
+                unsafe_allow_html=True
+            )
 
     # --- PHASE 2: AUDIO GENERATION (Background Task) ---
-    if MODULES_AVAILABLE and st.session_state.generated_poem:
+        if MODULES_AVAILABLE and st.session_state.generated_poem:
         
         # Create a placeholder for the audio player so it pops in later
-        audio_placeholder = st.empty()
+            audio_placeholder = st.empty()
         
-        with audio_placeholder.status("Synthesizing Audio...", expanded=False) as audio_status:
+            with audio_placeholder.status("Synthesizing Audio...", expanded=False) as audio_status:
             # 2. Generate Audio
-            audio = AudioEngine()
-            st.session_state.audio_bytes = audio.synthesize(st.session_state.generated_poem)
-            audio_status.update(label="Audio Ready", state="complete")
+                audio = AudioEngine()
+                st.session_state.audio_bytes = audio.synthesize(st.session_state.generated_poem)
+                audio_status.update(label="Audio Ready", state="complete")
         
         # 3. Replace the status spinner with the actual Audio Player
-        if st.session_state.audio_bytes:
-            audio_placeholder.audio(st.session_state.audio_bytes, format="audio/mpeg")
+            if st.session_state.audio_bytes:
+                audio_placeholder.audio(st.session_state.audio_bytes, format="audio/mpeg")
 
 else:
     st.info("System Idle: Select 'Camera' or 'Upload' to begin.")
