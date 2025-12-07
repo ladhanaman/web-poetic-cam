@@ -187,9 +187,9 @@ if image_source:
                         clean_title = raw_title
 
                         if "poem poem" in clean_title.lower():
-                            clean_title = clean_text.lower().replace("poem poem", "Poem").title()
+                            clean_title = clean_title.lower().replace("poem poem", "Poem").title()
 
-                        clean_text = clean_title.replace("_", " ").title()
+                        clean_title = clean_title.replace("_", " ").title()
 
 
                         st.markdown(f"**{clean_title}**")
