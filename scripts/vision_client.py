@@ -2,7 +2,7 @@ import os
 import typing_extensions as typing
 import google.generativeai as genai
 from dotenv import load_dotenv
-from PIL import Image  # NEW: For resizing
+from PIL import Image
 import io
 
 load_dotenv()
@@ -35,7 +35,7 @@ def analyze_image(image_path: str) -> str:
             # Keep img in memory for the API call
             
             
-            model = genai.GenerativeModel('gemini-2.0-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash')
 
             # 3. The Prompt
             prompt = """
