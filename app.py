@@ -99,7 +99,7 @@ elif input_method == "Camera":
     # This forces the browser to request a high-res stream (720p or 1080p).
     
     # We use an expander so the camera closes neatly after you take the photo
-    with st.expander("📸 Open Viewfinder (High Res)", expanded=(st.session_state.last_upload_id is None)):
+    with st.expander("Open Viewfinder", expanded=(st.session_state.last_upload_id is None)):
         camera_shot = st.camera_input("Capture Scene")
         if camera_shot:
             image_source = camera_shot
