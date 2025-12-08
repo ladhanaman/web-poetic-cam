@@ -3,7 +3,6 @@ import os
 import time
 from PIL import Image
 
-# --- Imports ---
 from scripts.vision_client import analyze_image
 from scripts.retriever import retrieve_poems, get_embedding
 from scripts.generator import generate_poem
@@ -60,7 +59,7 @@ for k in keys:
 with st.sidebar:
     st.header("Input Configuration")
     
-    # 1. Select Mode
+    #Select Mode
     input_method = st.radio(
         "Source", 
         ["Upload", "Camera"], 
@@ -85,20 +84,14 @@ with st.sidebar:
 st.title("Poetic Camera")
 st.caption("System Status: Online | Mode: Multimodal RAG")
 
-# --- CAMERA HANDLING (The Fix) ---
+# --- CAMERA HANDLING ---
 # We initialize image_source to None
 image_source = None
 
 if input_method == "Upload":
-    # If upload, grab from sidebar
     image_source = sidebar_upload
-
 elif input_method == "Camera":
-    # --- CRITICAL FIX: CAMERA IN MAIN AREA ---
-    # We place the camera widget here, spanning the full width of the main column.
-    # This forces the browser to request a high-res stream (720p or 1080p).
-    
-    # We use an expander so the camera closes neatly after you take the photo
+    # --- CAMERA IN MAIN AREA ---
     with st.expander("Open Viewfinder", expanded=(st.session_state.last_upload_id is None)):
         camera_shot = st.camera_input("Capture Scene")
         if camera_shot:
@@ -125,10 +118,10 @@ if image_source:
         with st.container(border=True):
             st.subheader("I. Ingestion")
             
-            # Display Image without stretching it (stops blur if image is small)
+            # Display Image without stretching it
             st.image(image_source, use_container_width=True)
             
-            # DEBUG: Show actual resolution to verify the fix
+            #Show actual resolution to verify the fix
             img = Image.open(image_source)
             st.caption(f"Res: {img.size[0]} x {img.size[1]} px")
 
@@ -137,7 +130,7 @@ if image_source:
         with st.container(border=True):
             st.subheader("II. Processing")
             
-            # 1. Vision Analysis
+            #Vision Analysis
             if not st.session_state.narrative:
                 with st.status("[SYSTEM] Initializing Vision Pipeline...", expanded=True) as s:
                     st.write("Task: Image Analysis (Llama 3.2 Vision)")
@@ -147,27 +140,26 @@ if image_source:
                     s.update(label="[SYSTEM] Vision Analysis: Complete", state="complete", expanded=False)
             
             # --- ERROR HANDLING & RETRIEVAL ---
-            # A. Check for empty results
             if not st.session_state.narrative:
                 st.error("Vision Analysis returned no data. Check logs.")
             
-            # B. Check for explicit error messages from our script
+            #Check for explicit error
             elif st.session_state.narrative.startswith("ERROR:") or "Error:" in st.session_state.narrative:
                 st.error(f"Pipeline Failed: {st.session_state.narrative}")
                 st.stop() 
             
-            # C. Proceed if valid
+            #Proceed if valid
             else:
                 st.info(f"**Narrative:** {st.session_state.narrative}")
 
-                # 2. Memory Retrieval
+                #Memory Retrieval
                 if not st.session_state.retrieved_items:
                     with st.spinner("Task: Vector Search (Pinecone)..."):
-                        # INDENTATION FIX: These lines are now inside the 'with' block
+                        
                         st.session_state.retrieved_items = retrieve_poems(st.session_state.narrative)
                         st.session_state.query_vector = get_embedding(st.session_state.narrative)
 
-            # 3. Visualization (Stays outside the retrieval block)
+            #Visualization (Stays outside the retrieval block)
             if st.session_state.retrieved_items and MODULES_AVAILABLE:
                 st.write("---")
                 st.caption("Latent Space Visualization")
@@ -190,7 +182,7 @@ if image_source:
             if st.session_state.retrieved_items:
                 
                 st.markdown("#### Parameters")
-                temperature = st.slider("Model Temperature", 0.1, 1.0, 0.7)
+                temperature = st.slider("Model creative freedom", 0.1, 1.0, 0.5)
                 
                 with st.expander("Context Data"):
                     for i, m in enumerate(st.session_state.retrieved_items):
@@ -210,15 +202,13 @@ if image_source:
                         st.caption(f"{clean_text}") 
                         st.divider()
 
-                # ... inside the button click event ...
 
     if st.button("Generate poem with voice", type="primary", use_container_width=True):
     
-    # --- PHASE 1: TEXT GENERATION (Critical Path) ---
+#TEXT GENERATION
         with st.status("Drafting Poem...", expanded=True) as status:
             st.write("Task: Text Inference (Llama-3-70b)")
         
-        # 1. Generate text
             st.session_state.generated_poem = generate_poem(
                 st.session_state.narrative,
                 st.session_state.retrieved_items,
@@ -226,7 +216,7 @@ if image_source:
             )
             status.update(label="Poem Drafted!", state="complete", expanded=False)
 
-    # --- IMMEDIATE RENDER ---
+#IMMEDIATE RENDER
         if st.session_state.generated_poem:
             clean_poem = st.session_state.generated_poem.replace("- ", "— ")
         
@@ -235,7 +225,7 @@ if image_source:
                 unsafe_allow_html=True
             )
 
-    # --- PHASE 2: AUDIO GENERATION (Background Task) ---
+#AUDIO GENERATION (Background Task)
         if MODULES_AVAILABLE and st.session_state.generated_poem:
         # Create a placeholder for the audio player so it pops in later
             audio_placeholder = st.empty()
@@ -245,7 +235,7 @@ if image_source:
                 st.session_state.audio_bytes = audio.synthesize(st.session_state.generated_poem)
                 audio_status.update(label="Audio Ready", state="complete")
         
-        # 3. Replace the status spinner with the actual Audio Player
+#Replace the status spinner with the actual Audio Player
             if st.session_state.audio_bytes:
                 audio_placeholder.audio(st.session_state.audio_bytes, format="audio/mpeg")
 
