@@ -59,7 +59,7 @@ def load_data():
     print("Starting Batch Processing...")
 
     for i, poem in enumerate(poems):
-        # A. Create the Semantic String
+        # Create the Semantic String
         semantic_text = build_semantic_string(poem)
         
         # B. Generate Embedding (The "Translation" to Math)
@@ -75,7 +75,7 @@ def load_data():
             print(f"Error embedding poem {poem.get('id', 'unknown')}: {e}")
             continue
 
-        # C. Prepare Pinecone Payload
+        # Prepare Pinecone Payload
         # We store the 'text' in metadata so we can print it later without querying a separate DB
         vector_payload = {
             "id": poem.get("id"), 
