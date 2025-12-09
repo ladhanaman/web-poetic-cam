@@ -94,7 +94,7 @@ def load_data():
             print(f"Upserted batch {i+1}/{len(poems)}")
             vectors_to_upsert = [] # Reset batch
 
-    # E. Final Upsert (for any leftovers)
+    # Final Upsert (for any leftovers)
     if vectors_to_upsert:
         index.upsert(vectors=vectors_to_upsert)
         print(f"Upserted final batch. Total processed.")
