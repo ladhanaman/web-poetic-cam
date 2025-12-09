@@ -26,20 +26,20 @@ class AudioEngine:
                 print("[ERROR] AudioEngine received empty text.")
                 return None
 
-            # 1. Initialize the Google TTS engine
+            # Initialize the Google TTS engine
             tts = gTTS(text=text, lang=self.lang, tld=self.tld, slow=False)
             
-            # 2. Create an in-memory file buffer (BytesIO)
+            # Create an in-memory file buffer (BytesIO)
             # This acts like a file on a hard drive, but lives in RAM.
             buffer = io.BytesIO()
             
-            # 3. Write audio data to the buffer
+            # Write audio data to the buffer
             tts.write_to_fp(buffer)
             
-            # 4. Rewind the buffer to the beginning so it can be read
+            # Rewind the buffer to the beginning so it can be read
             buffer.seek(0)
             
-            # 5. Get the raw bytes
+            # Get the raw bytes
             audio_bytes = buffer.getvalue()
             
             print(f"[SYSTEM] gTTS Complete. Size: {len(audio_bytes)} bytes.")
