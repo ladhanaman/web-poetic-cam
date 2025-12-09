@@ -26,14 +26,14 @@ class LatentSpaceVisualizer:
         types = [] 
         sizes = []
 
-        # 1. Load Universe (from the passed data)
+        # Load Universe
         for vec in self.background_vectors:
             vectors.append(vec)
             labels.append("Latent Background")
             types.append("Universe")
             sizes.append(3) 
 
-        # 2. Load Memories (from Pinecone results)
+        # Load Memories
         for item in retrieved_items:
             if 'values' in item:
                 vectors.append(item['values'])
@@ -42,7 +42,7 @@ class LatentSpaceVisualizer:
                 types.append("Memory")
                 sizes.append(10)
 
-        # 3. Load Sensation (User Input)
+        # Load Sensation
         vectors.append(query_vector)
         labels.append("Your Vision")
         types.append("Sensation")
