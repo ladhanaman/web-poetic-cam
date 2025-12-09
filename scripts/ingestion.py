@@ -26,7 +26,7 @@ def clean_and_split(raw_text: str) -> list[str]:
     else:
         content = raw_text
 
-    # 2. Normalize Roman Numerals & Headers
+    # Normalize Roman Numerals & Headers
     # We want to remove lines that are JUST Roman numerals (I., XIV.) or Category titles (LIFE, LOVE)
     # This Regex looks for lines that are just uppercase words or Roman numerals
     lines = content.split('\n')
@@ -50,7 +50,7 @@ def clean_and_split(raw_text: str) -> list[str]:
     # Rejoin to process as blocks
     text_block = "\n".join(cleaned_lines)
     
-    # 3. Split by Double Newline (The standard poem delimiter)
+    # Split by Double Newline (The standard poem delimiter)
     raw_chunks = text_block.split("\n\n\n") # Gutenberg uses roughly 3 newlines between poems
     
     valid_poems = []
@@ -70,10 +70,10 @@ def main():
         print(e)
         return
 
-    print("⚙️  Processing text...")
+    print("Processing text...")
     poems = clean_and_split(raw_text)
     
-    print(f"✅ Extracted {len(poems)} poems.")
+    print(f"Extracted {len(poems)} poems.")
     
     # Save to a clean file for inspection
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
