@@ -42,7 +42,7 @@ def generate_poem(vision_narrative: str, reference_poems: List[Dict],temperature
     6. Do not output any intro text (like "Here is a poem"). Just the poem.
     """
 
-    # 3. The User Prompt (The Task)
+    #The User Prompt
     user_prompt = f"""
     SCENE OBSERVED:
     {vision_narrative}
@@ -53,7 +53,7 @@ def generate_poem(vision_narrative: str, reference_poems: List[Dict],temperature
     Write the poem now:
     """
 
-    # 4. The Generation
+    #The Generation
     try:
         chat_completion = client.chat.completions.create(
             messages=[
