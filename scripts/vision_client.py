@@ -33,7 +33,7 @@ def analyze_image(image_file) -> str:
                 img = img.convert('RGB')
             
             # Resize to optimize token usage and latency
-            img.thumbnail((800, 800))
+            img.thumbnail((512, 512))
             
             # 2. Convert to Base64
             buffered = io.BytesIO()
