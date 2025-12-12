@@ -15,29 +15,16 @@ try:
 except ImportError:
     MODULES_AVAILABLE = False
 
+# --- Config ---
+st.set_page_config(layout="wide", page_title="Poetic Camera")
+
 st.markdown("""
 <style>
     .stApp { background-color: #0e1117; color: #c9d1d9; }
     .stButton>button { background-color: #238636; color: white; border-radius: 5px; height: 3em; font-family: monospace; }
     h1, h2, h3 { font-family: 'Courier New', Courier, monospace; }
-
-    /* 1. Hide the Hamburger Menu and Footer */
-    #MainMenu {visibility: hidden; display: none;}
-    footer {visibility: hidden; display: none !important;}
-
-    /* 2. Hide the Top Toolbar (Share, Edit, GitHub, etc.) */
-    [data-testid="stToolbar"] {visibility: hidden; display: none !important;}
-
-    /* 3. The Header Container: Make it invisible so the bar disappears... */
-    header {
-        visibility: hidden !important;
-    }
-
-    /* 4. ...BUT make the Sidebar Toggle Button (chevron) visible again */
-    [data-testid="stSidebarCollapsedControl"] {
-        visibility: visible !important;
-        display: block !important;
-    }
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
