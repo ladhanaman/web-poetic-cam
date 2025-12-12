@@ -15,23 +15,23 @@ try:
 except ImportError:
     MODULES_AVAILABLE = False
 
-# --- Config ---
-st.set_page_config(layout="wide", page_title="Poetic Camera")
-
 st.markdown("""
 <style>
     .stApp { background-color: #0e1117; color: #c9d1d9; }
     .stButton>button { background-color: #238636; color: white; border-radius: 5px; height: 3em; font-family: monospace; }
     h1, h2, h3 { font-family: 'Courier New', Courier, monospace; }
     
-    /* Removes the "Made with Streamlit" footer */
-    footer {visibility: hidden;}
-    
-    /* Removes the hamburger menu (top right) */
+    /* Hides the main menu (hamburger icon) */
     #MainMenu {visibility: hidden;}
     
-    /* Optional: Removes the top colored header strip */
-    header {visibility: hidden;} 
+    /* Hides the "Made with Streamlit" footer */
+    footer {visibility: hidden;}
+    
+    /* Hides the top header bar which often contains the "Manage app" or GitHub buttons */
+    header {visibility: hidden;}
+    
+    /* Hides the specific toolbar area with the Share/Edit buttons */
+    [data-testid="stToolbar"] {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
