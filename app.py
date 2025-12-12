@@ -20,18 +20,19 @@ st.markdown("""
     .stApp { background-color: #0e1117; color: #c9d1d9; }
     .stButton>button { background-color: #238636; color: white; border-radius: 5px; height: 3em; font-family: monospace; }
     h1, h2, h3 { font-family: 'Courier New', Courier, monospace; }
-    
-    /* Hides the main menu (hamburger icon) */
-    #MainMenu {visibility: hidden;}
-    
-    /* Hides the "Made with Streamlit" footer */
-    footer {visibility: hidden;}
-    
-    /* Hides the top header bar which often contains the "Manage app" or GitHub buttons */
-    header {visibility: hidden;}
-    
-    /* Hides the specific toolbar area with the Share/Edit buttons */
-    [data-testid="stToolbar"] {visibility: hidden;}
+
+    /* Hides the Main Menu (Hamburger) */
+    #MainMenu {visibility: hidden; display: none;}
+
+    /* Hides the "Made with Streamlit" footer and the "Manage app" button */
+    footer {visibility: hidden; display: none !important;}
+
+    /* Hides the Toolbar (Share, Edit, GitHub icon, etc.) */
+    /* We use !important to override Streamlit's default styling */
+    [data-testid="stToolbar"] {visibility: hidden; display: none !important;}
+
+    /* Hides the colored top decoration line (optional, for a cleaner look) */
+    [data-testid="stDecoration"] {visibility: hidden; display: none;}
 </style>
 """, unsafe_allow_html=True)
 
